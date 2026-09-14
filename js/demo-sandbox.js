@@ -587,6 +587,23 @@
         markHeroDismissed();
         hideSampleHero();
         beacon("demo_view");
+        try {
+          if (typeof global.routeDeskOrGold === "function") {
+            global.routeDeskOrGold();
+          } else {
+            const PT = global.RunnrPretrade;
+            if (PT && typeof PT.wantsUnifiedJournal === "function" && PT.wantsUnifiedJournal()) {
+              if (PT.openUnifiedJournal) PT.openUnifiedJournal();
+              else if (typeof global.switchPage === "function") global.switchPage("journal");
+            } else {
+              const gold = PT && typeof PT.wantsGold === "function" && PT.wantsGold();
+              if (gold && PT.open) PT.open("desk");
+              else if (PT && typeof PT.wantsMarketDesk === "function" && PT.wantsMarketDesk() && global.RunnrDesk) {
+                RunnrDesk.open();
+              }
+            }
+          }
+        } catch (e) {}
       });
     }
     doc.querySelectorAll("#sample-hero [data-runnr-proof]").forEach((card) => {
