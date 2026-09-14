@@ -71,7 +71,7 @@ function renderHomeJob() {
   const countable = window.RunnrTradeLimit
     ? RunnrTradeLimit.countJournalTradesForLimit(S.trades)
     : 0;
-  if (terminalLink) terminalLink.hidden = countable < 1;
+  if (terminalLink) terminalLink.hidden = countable < 1 && !demoDesk;
   if (title) title.textContent = job.title;
   if (sub) sub.textContent = job.sub;
   if (cta) {
@@ -86,6 +86,10 @@ window.renderHomeJob = renderHomeJob;
 function runHomeJob(job) {
   if (!job) return;
   if (job.id === 'log') {
+    if (window.RunnrPretrade && typeof RunnrPretrade.open === 'function') {
+      RunnrPretrade.open();
+      return;
+    }
     switchPage('journal');
     if (typeof openLogModal === 'function') openLogModal('cfd');
     return;
@@ -109,6 +113,10 @@ function runHomeJob(job) {
 window.runHomeJob = runHomeJob;
 
 function focusSizerForNextTrade() {
+  if (window.RunnrPretrade && typeof RunnrPretrade.open === 'function') {
+    RunnrPretrade.open();
+    return;
+  }
   switchPage('sizer');
   const page = document.getElementById('page-sizer');
   if (page && page.scrollIntoView) page.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -129,7 +137,10 @@ function switchPage(key) {
   document.getElementById(pageMap[key] || 'page-home').classList.add('active');
   document.querySelectorAll('.nav-btn').forEach((b,i) => b.classList.toggle('active', i === (navIdx[key] ?? -1) || b.dataset.nav === key));
   if (key === 'journal') renderJournal();
-  if (key === 'sizer') { renderChallengePanel(); try { calcCFD(); } catch (e) {} }
+  if (key === 'sizer') {
+    renderChallengePanel();
+    try { calcCFD(); } catch (e) {}
+  }
   if (key === 'crypto') { renderChallengePanel(); try { calcCrypto(); } catch (e) {} }
   if (key === 'watchlist') {
     renderWatchlist();
@@ -153,8 +164,18 @@ function switchPage(key) {
     else restoreAlpacaInBackground();
   }
   if (key === 'desk') {
+    try {
+      if (location.hash !== '#desk') {
+        history.replaceState(null, '', location.pathname + location.search + '#desk');
+      }
+    } catch (e) {}
     if (window.RunnrDesk) RunnrDesk.enter();
   } else if (window.RunnrDesk) {
     RunnrDesk.leave();
+  }
+  if (key === 'sizer') {
+    if (window.RunnrPretrade) RunnrPretrade.enter();
+  } else if (window.RunnrPretrade) {
+    RunnrPretrade.leave();
   }
 }
